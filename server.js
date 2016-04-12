@@ -8,9 +8,10 @@
 var static = require('node-static');
 var http = require('http');
 var file = new(static.server);
+var host = 'localhost'; // for running on the server this should be 130.126.136.114
 var app = http.createServer(function (req, res) {
 	file.serve(req, res);
-}).listen(2013);
+}).listen(2013, host);
 
 /**
  Here we start using the socket.io API to 
