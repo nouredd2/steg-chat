@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name='keywords' content='WebRTC, HTML5, JavaScript' />
+<meta name='description' content='WebRTC Video Chat Application' />
+<meta name='viewport' content='width=device-width, initial-scale=1, minimum-scale=1' />
+
+<base target='_blank'>
+</head>
+
+<body>
+
+<div id='container'>
+
+	<div id='videos'>
+		<!-- This is the video from the local cam -->
+		<video id='localVideo' autoplay muted></video>
+		<!-- This is teh video from the remote cam -->
+		<video id='remoteVideo' autoplay></video>
+	</div>
+
+</div>
+
+<!-- Here goes the scripts -->
+<script src='/socket.io/socket.io.js'></script>
+<script src='js/lib/adapter.js'></script>
+<script src='js/main.js'></script>
+
+</body>
+</html>

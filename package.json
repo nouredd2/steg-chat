@@ -1,0 +1,13 @@
+{
+  "name": "steg-chat",
+  "version": "0.0.1",
+  "description": "Web video chat with steganography",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nouredd2/steg-chat.git"
+  },
+  "dependencies": {
+    "node-static": "^0.7.7",
+    "socket.io": "^1.4.5"
+  }
+}
