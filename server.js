@@ -7,8 +7,10 @@
  */
 var static = require('node-static');
 var http = require('http');
-var file = new(static.server);
-var host = 'localhost'; // for running on the server this should be 130.126.136.114
+var file = new(static.Server)();
+// for running on the server this should be 130.126.136.114
+// var host = 'localhost'; 
+var host = '130.126.136.114';
 var app = http.createServer(function (req, res) {
 	file.serve(req, res);
 }).listen(2013, host);
@@ -32,7 +34,7 @@ io.sockets.on('connection', function(socket) {
 
 	// function handler when receiving a connection request
 	// room is the chat room to be established or joined
-	socket.on('message', function(room) {
+	socket.on('message', function(message) {
 		log ('Got message: ', message);
 		// broadcast the message
 		socket.broadcast.emit('message', message);

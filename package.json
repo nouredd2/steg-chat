@@ -2,12 +2,14 @@
   "name": "steg-chat",
   "version": "0.0.1",
   "description": "Web video chat with steganography",
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/nouredd2/steg-chat.git"
   },
+  "author": "nouredd2",
   "dependencies": {
     "node-static": "^0.7.7",
-    "socket.io": "^1.4.5"
+    "socket.io": "^0.9.17"
   }
 }
