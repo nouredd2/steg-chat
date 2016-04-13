@@ -20,12 +20,19 @@
 		<video id='remoteVideo' autoplay></video>
 	</div>
 
+	<!-- div to hold the canvas, but should be hidden not to affect the user -->
+	<div id=canvasdiv>
+		<canvas id='localcanvas' width='640' height='480'></canvas>
+	</div>
+
 </div>
 
 <!-- Here goes the scripts -->
 <script src='/socket.io/socket.io.js'></script>
 <script src='js/lib/adapter.js'></script>
+<script src='seriously.js'></script>
+<script src='effects/seriously.invert.js'></script>
+<script src='effects/seriously.select.js'></script>
 <script src='js/main.js'></script>
-
 </body>
 </html>

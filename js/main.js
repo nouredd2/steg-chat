@@ -105,11 +105,26 @@ socket.on('message', function (message) {
 });
 
 /* --------------------------------------------------------------------------- */
-// this is basically the place where we get the stream from the user and 
-// set up handling the messages
+// seriously stuff to test out the canvas
 
 var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
+var localcanvas = document.querySelector('#localcanvas');
+
+
+// this sets up the seriously effects for testing the
+// modification of the video stream
+var seriously = new Seriously();
+var source = seriously.source('#localVideo');
+var target = seriously.target('#localcanvas');
+var tvglitch = seriously.effect('invert');
+tvglitch.source = source;
+target.source = tvglitch;
+
+/* --------------------------------------------------------------------------- */
+// this is basically the place where we get the stream from the user and 
+// set up handling the messages
+
 
 // got the local user media from the camera and microphone
 // this function contains our actual stream that we are getting 
@@ -125,6 +140,17 @@ function handleUserMedia(stream) {
 	sendMessage('got user media');
 	if (isInitiator) {
 		maybeStart();
+		seriously.go();
+
+		// check if capture stream is supported
+		if (localcanvas.captureStream) {
+			// set the local stream to the output of the 
+			// canvas in which we are doing operations
+			console.log('Changing the local stream to canvas stream');
+			// this takes as parameter the fps of the capture stream 
+			// but it seems to be very slow when I use it
+			localStream = localcanvas.captureStream();
+		}
 	}
 }
 
@@ -149,7 +175,7 @@ function maybeStart() {
 		createPeerConnection();
 		pc.addStream(localStream);
 		isStarted = true;
-		// basically the initiate of the room is the one that 
+		// basically the initiator of the room is the one that 
 		// starts the call 
 		if (isInitiator) {
 			doCall();
