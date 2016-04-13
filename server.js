@@ -55,7 +55,7 @@ io.sockets.on('connection', function(socket) {
 			socket.emit('created', room);
 		} else if (numClients == 1) {
 			// someone else is already there
-			io.socket.in(room).emit('join', room);
+			io.sockets.in(room).emit('join', room);
 			socket.join(room);
 			socket.emit('joined', room);
 		} else {

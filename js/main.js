@@ -28,10 +28,8 @@ var sdpConstraints = {'mandatory': {
 // get the room name or assign it, leaving it to webchat by default
 var room = 'webchat';
 
-var host = 'localhost'; // this should be 130.126.136.114 when connecting to the server
-var socket = new io.Socket();
-socket.connect(host + ':2013');
-// var socket = io.connect();
+
+var socket = io.connect();
 
 // join or create a room, this basically signals the server to create
 // the room for the client or to join it if its already there. The
@@ -90,10 +88,10 @@ socket.on('message', function (message) {
 		if (!isInitiator && !isStarted) {
 			maybeStart();
 		}
-		pc.setRemoteDescription(new RTCSessionsDescription(message));
+		pc.setRemoteDescription(new RTCSessionDescription(message));
 		doAnswer();
 	} else if (message.type === 'answer' && isStarted) {
-		pc.setRemoteDescription(new RTCSessionsDescription(message));
+		pc.setRemoteDescription(new RTCSessionDescription(message));
 	} else if (message.type === 'candidate' && isStarted) {
 		var candidate = new RTCIceCandidate({
 			sdpMLineIndex: message.label,
@@ -142,9 +140,9 @@ getUserMedia(constraints, handleUserMedia, handleUserMediaError);
 console.log('Getting user media with constraints', constraints);
 
 // this is suspicious, must make sure what this thing is doing 
-if (location.hostname != 'localhost') {
-	requestTurn('https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913');
-}
+// if (location.hostname != 'localhost') {
+	// requestTurn('https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913');
+// }
 
 function maybeStart() {
 	if (!isStarted && typeof localStream != 'undefined'  && isChannelReady) {
@@ -192,7 +190,8 @@ function handleIceCandidate(event) {
 		sendMessage({
 			type: 'candidate',
 			label: event.candidate.sdpMLineIndex,
-			id: event.candidate.candidate
+			id: event.candidate.sdpMid,
+			candidate: event.candidate.candidate
 		});
 	} else {
 		console.log('End of candidates');
@@ -211,7 +210,13 @@ function doCall() {
 
 function doAnswer() {
 	console.log('Sending answer to peer.');
-	pc.createAnswer(setLocalAndSendMessage, null, sdpConstraints);
+	pc.createAnswer(setLocalAndSendMessage, handleCreateAnswerError, sdpConstraints);
+}
+
+// this is needed because firefox does not take null 
+// as an error handler while chrome does!
+function handleCreateAnswerError(event) {
+	console.log('createAnswer() error: ', e);
 }
 
 function setLocalAndSendMessage(sessionDescription) {
