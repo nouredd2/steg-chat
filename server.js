@@ -9,8 +9,8 @@ var static = require('node-static');
 var http = require('http');
 var file = new(static.Server)();
 // for running on the server this should be 130.126.136.114
-var host = 'localhost'; 
-// var host = '130.126.136.114';
+// var host = 'localhost'; 
+var host = '130.126.136.114';
 var app = http.createServer(function (req, res) {
 	file.serve(req, res);
 }).listen(2013, host);

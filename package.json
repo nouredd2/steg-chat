@@ -10,6 +10,7 @@
   "author": "nouredd2",
   "dependencies": {
     "node-static": "^0.7.7",
-    "socket.io": "^0.9.17"
+    "socket.io": "^0.9.17",
+    "steganography.js": "git+https://github.com/petereigenschink/steganography.js.git"
   }
 }

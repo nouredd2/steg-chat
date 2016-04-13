@@ -21,8 +21,13 @@
 	</div>
 
 	<!-- div to hold the canvas, but should be hidden not to affect the user -->
-	<div id=canvasdiv>
-		<canvas id='localcanvas' width='640' height='480'></canvas>
+	<div id='canvasdiv'>
+		<canvas id='localcanvas'></canvas>
+		<canvas id='tmpcanvas'></canvas>
+		<canvas id='decodecanvas'></canvas>
+	</div>
+
+	<div id='txtMessage'>
 	</div>
 
 </div>
@@ -33,6 +38,7 @@
 <script src='seriously.js'></script>
 <script src='effects/seriously.invert.js'></script>
 <script src='effects/seriously.select.js'></script>
+<script src='node_modules/steganography.js/build/steganography.js'></script>
 <script src='js/main.js'></script>
 </body>
 </html>

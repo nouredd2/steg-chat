@@ -110,16 +110,103 @@ socket.on('message', function (message) {
 var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
 var localcanvas = document.querySelector('#localcanvas');
+var localctx = localcanvas.getContext('2d');
 
+var decodecanvas = document.querySelector('#decodecanvas');
+var decodectx = decodecanvas.getContext('2d');
+
+var tmpcanvas = document.createElement('canvas');
+var backcontext = tmpcanvas.getContext('2d');
+
+var msgdiv = document.querySelector('#txtMessage');
+
+var prevtime = (new Date()).getTime();
+var curtime = prevtime;
+var justonce = 1;
 
 // this sets up the seriously effects for testing the
 // modification of the video stream
-var seriously = new Seriously();
-var source = seriously.source('#localVideo');
-var target = seriously.target('#localcanvas');
-var tvglitch = seriously.effect('invert');
-tvglitch.source = source;
-target.source = tvglitch;
+//var seriously = new Seriously();
+//var source = seriously.source('#localVideo');
+//var target = seriously.target('#localcanvas');
+//var tvglitch = seriously.effect('invert');
+//tvglitch.source = source;
+//target.source = tvglitch;
+
+function stegdraw (vid, ctx, bctx, width, height) {
+	if (vid.paused || vid.ended) {
+		return false;
+	}
+
+	// draw on the back canvas
+	bctx.drawImage(vid, 0, 0, width, height);
+	
+	// grab the image data
+	var idata = bctx.getImageData(0, 0, width, height);
+	var data = idata.data;
+
+	for (var i = 0;i < data.length; i+=4) {
+		var r = data[i],
+			g = data[i+1],
+			b = data[i+2];
+
+		//data[i] = brightness;
+		//data[i+1] = brightness;
+		//data[i+2] = brightness;
+		curtime = (new Date()).getTime();
+		if (curtime - prevtime >= 5000) {
+			if (justonce === 1) {
+				console.log('bingo');
+				justonce = 0;
+			}
+			data[i] = 104;
+			data[i+1] = 255;
+			data[i+2] = 255;
+			data[i+3] = 255;
+		}
+		prevtime = curtime;
+
+	}
+
+	// put the image back into our canvas 
+	ctx.putImageData(idata, 0, 0);
+
+	setTimeout(function() { stegdraw(vid, ctx, bctx, width, height); }, 20);
+}
+
+
+function decodeMessage(vid, ctx, width, height, msgBox) {
+	if (vid.paused || vid.ended) {
+		return false;
+	}
+
+	ctx.drawImage(vid, 0, 0, width, height);
+
+	// grab current frame data
+	var idata = ctx.getImageData(0, 0, width, height);
+	var data = idata.data;
+
+	for (var i = 0; i < data.length; i +=4) {
+		var r = data[i];
+		var g = data[i+1];
+		var b = data[i+2];
+		var a = data[i+3];
+
+		if (a === 255 && g === 255 && b === 255) {
+			if (justonce === 1) {
+				console.log('got your letter', r);
+				justonce = 2;
+			} else if (justonce === 2) {
+				console.log('got your letter', r);
+				justonce = 0;
+			}
+			var letter = r;
+			msgBox.innerHTML = letter;
+		}
+	}
+
+	setTimeout( function() { decodeMessage(vid, ctx, width, height, msgBox); }, 20 );
+}
 
 /* --------------------------------------------------------------------------- */
 // this is basically the place where we get the stream from the user and 
@@ -140,13 +227,26 @@ function handleUserMedia(stream) {
 	sendMessage('got user media');
 	if (isInitiator) {
 		maybeStart();
-		seriously.go();
+		//seriously.go();
 
 		// check if capture stream is supported
 		if (localcanvas.captureStream) {
 			// set the local stream to the output of the 
 			// canvas in which we are doing operations
 			console.log('Changing the local stream to canvas stream');
+
+			localVideo.addEventListener('play', function() {
+				var clientw = localVideo.clientWidth;
+				var clienth = localVideo.clientHeight;
+
+				localcanvas.width = clientw;
+				localcanvas.height = clienth;
+				tmpcanvas.width = clientw;
+				tmpcanvas.height = clienth;
+
+				stegdraw(localVideo, localctx, backcontext, clientw, clienth);
+			});
+
 			// this takes as parameter the fps of the capture stream 
 			// but it seems to be very slow when I use it
 			localStream = localcanvas.captureStream();
@@ -283,6 +383,7 @@ function requestTurn(turn_url) {
 	}
 }
 
+
 // this is basically where we are getting the remote stream 
 // so basically this is where we get the stream containing 
 // our modified injected data
@@ -290,6 +391,18 @@ function handleRemoteStreamAdded(event) {
 	console.log('Remote stream added.');
 	remoteVideo.src = window.URL.createObjectURL(event.stream);
 	remoteStream = event.stream;
+
+	if (!isInitiator) {
+		remoteVideo.addEventListener('play', function() {
+				var clientw = remoteVideo.clientWidth;
+				var clienth = remoteVideo.clientHeight;
+
+				decodecanvas.width = clientw;
+				decodecanvas.height = clienth;
+
+				decodeMessage(remoteVideo, decodectx, clientw, clienth, msgdiv);
+		});
+	}
 }
 
 function handleRemoteStreamRemoved(event) {
