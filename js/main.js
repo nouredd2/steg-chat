@@ -148,21 +148,22 @@ function stegdraw (vid, ctx, bctx, width, height) {
 	for (var i = 0;i < data.length; i+=4) {
 		var r = data[i],
 			g = data[i+1],
-			b = data[i+2];
+			b = data[i+2],
+			alpha = data[i+3];
 
-		//data[i] = brightness;
-		//data[i+1] = brightness;
-		//data[i+2] = brightness;
+		// mask to get the last two bits of the pixel 
+		var mask = 0xFFFFFFFC;
+		var letter = 104; // 104 in binary is 01101000
 		curtime = (new Date()).getTime();
-		if (curtime - prevtime >= 5000) {
+		if (curtime - prevtime >= 0) {
 			if (justonce === 1) {
 				console.log('bingo');
 				justonce = 0;
 			}
-			data[i] = 104;
-			data[i+1] = 255;
-			data[i+2] = 255;
-			data[i+3] = 255;
+			data[i] = (data[i] & mask) | 0x00000000;
+			data[i+1] = (data[i+1] & mask) | 0x00000001;
+			data[i+2] = (data[i+2] & mask) | 0x00000001;
+			data[i+3] = (data[i+3] & mask) | 0x00000002;
 		}
 		prevtime = curtime;
 
@@ -192,6 +193,18 @@ function decodeMessage(vid, ctx, width, height, msgBox) {
 		var b = data[i+2];
 		var a = data[i+3];
 
+		if (justonce === 1) {
+			console.log(r.toString(2));
+			console.log(g.toString(2));
+			console.log(b.toString(2));
+			console.log(a.toString(2));
+		} else if (justonce === 2) {
+			console.log(r.toString(2));
+			console.log(g.toString(2));
+			console.log(b.toString(2));
+			console.log(a.toString(2));
+		}
+		/*
 		if (a === 255 && g === 255 && b === 255) {
 			if (justonce === 1) {
 				console.log('got your letter', r);
@@ -203,6 +216,7 @@ function decodeMessage(vid, ctx, width, height, msgBox) {
 			var letter = r;
 			msgBox.innerHTML = letter;
 		}
+		*/
 	}
 
 	setTimeout( function() { decodeMessage(vid, ctx, width, height, msgBox); }, 20 );
