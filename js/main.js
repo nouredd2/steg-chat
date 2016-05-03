@@ -243,6 +243,7 @@ function handleUserMedia(stream) {
 		maybeStart();
 		//seriously.go();
 
+		/*
 		// check if capture stream is supported
 		if (localcanvas.captureStream) {
 			// set the local stream to the output of the 
@@ -265,6 +266,7 @@ function handleUserMedia(stream) {
 			// but it seems to be very slow when I use it
 			localStream = localcanvas.captureStream();
 		}
+		*/
 	}
 }
 
@@ -406,6 +408,7 @@ function handleRemoteStreamAdded(event) {
 	remoteVideo.src = window.URL.createObjectURL(event.stream);
 	remoteStream = event.stream;
 
+	/*
 	if (!isInitiator) {
 		remoteVideo.addEventListener('play', function() {
 				var clientw = remoteVideo.clientWidth;
@@ -416,7 +419,7 @@ function handleRemoteStreamAdded(event) {
 
 				decodeMessage(remoteVideo, decodectx, clientw, clienth, msgdiv);
 		});
-	}
+	}*/
 }
 
 function handleRemoteStreamRemoved(event) {
