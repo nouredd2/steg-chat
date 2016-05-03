@@ -18,12 +18,10 @@ def do_packet_steg(packet):
 		udp_pkt.decode_payload_as(RTP)
 		rtp_pkt = pkt.getlayer(RTP)
 
-		rtp_pkt.show2()
 		if (rtp_pkt.payload_type == 120L) and (rtp_pkt.padding == 1L):
 			print "Found possible candidate"
 			data = rtp_pkt.load
-			print data
-			print data.len
+			print hexdump(data[len(data)-1])
 
 
 	# accept the packet to send it out after the
