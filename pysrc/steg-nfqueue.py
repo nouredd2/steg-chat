@@ -23,7 +23,9 @@ def do_packet_steg(packet):
 		# the udp checksum so that it can work here!
 		rtp_pkt.padding = 1
 		rtp_pkt.load = rtp_pkt.load + 'a'
-		
+	
+	print pkt.show2()
+
 	pkt.decode_payload_as(UDP)
 	print pkt.len
 	print pkt.chksum
@@ -31,8 +33,8 @@ def do_packet_steg(packet):
 	print pkt[UDP].chksum
 	del pkt.chksum
 	del pkt[UDP].chksum
-	pkt[UDP].len = pkt[UDP].len + 1
 	pkt.len = pkt.len + 1
+	pkt[UDP].len = pkt[UDP].len + 1
 	pkt = pkt.__class__(str(pkt))
 	print pkt.len
 	print pkt.chksum
