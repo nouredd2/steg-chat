@@ -5,10 +5,13 @@ import socket
 import nfqueue
 from scapy.all import * 
 
+received_bytes = 0
+
 def do_packet_steg(packet):
 	# get scapy compatible string
 	pkt = IP(packet.get_data())
 
+	global received_bytes
 
 	# start packet modification here 
 	if pkt.haslayer(UDP) and pkt.haslayer(Raw):
@@ -18,9 +21,13 @@ def do_packet_steg(packet):
 
 		if (rtp_pkt.payload_type == 120L): # and (rtp_pkt.padding == 1L):
 			data = rtp_pkt.load
-			print "Got ", data[len(data)-1]
 
 			rtp_pkt.load = data[0:len(data)-1]
+
+			received_bytes = received_bytes + 1
+			if (received_bytes % 1000 == 0):
+				print "Received ", received_bytes, " bytes..."
+
 
 			udp_pkt.len = udp_pkt.len - 1
 			pkt.len = pkt.len - 1

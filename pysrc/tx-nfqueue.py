@@ -48,7 +48,8 @@ def do_packet_steg(packet):
 				pkt = pkt.__class__(str(pkt))
 
 				byte_count = byte_count + 1
-				print "Sent", byte_count, " bytes in total..."
+				if (byte_count % 1000 == 0):
+					print "Sent", byte_count, " bytes in total..."
 			
 				# accept the packet to send it out after the
 				# modification takes place 
