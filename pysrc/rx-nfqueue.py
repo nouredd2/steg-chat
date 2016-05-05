@@ -11,8 +11,6 @@ def do_packet_steg(packet):
 
 
 	# start packet modification here 
-	#print pkt.show2()
-
 	if pkt.haslayer(UDP) and pkt.haslayer(Raw):
 		udp_pkt = pkt.getlayer(UDP)
 		udp_pkt.decode_payload_as(RTP)
@@ -22,7 +20,6 @@ def do_packet_steg(packet):
 			data = rtp_pkt.load
 			print "Got ", data[len(data)-1]
 
-			#print pkt.show2()
 			rtp_pkt.load = data[0:len(data)-1]
 
 			udp_pkt.len = udp_pkt.len - 1
@@ -30,7 +27,6 @@ def do_packet_steg(packet):
 			del pkt.chksum
 			del udp_pkt.chksum
 			pkt = pkt.__class__(str(pkt))
-			#print pkt.show2()
 			packet.set_verdict_modified(nfqueue.NF_ACCEPT, str(pkt), len(pkt))
 		else:
 			packet.set_verdict(nfqueue.NF_ACCEPT)

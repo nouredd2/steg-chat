@@ -23,7 +23,8 @@ def do_packet_steg(packet):
 	# print pkt.summary()
 	count = count + 1
 
-	b = f.read(1)
+	# b = f.read(1)
+	b = chr(random.randint(1, 255)) # generate random byte
 	if b:
 		# there is data to send out!
 		# if  (count % 5 != 0):
@@ -38,12 +39,7 @@ def do_packet_steg(packet):
 				# ok so now we need to set to padding bit and 
 				# add the extra byte. I need to worry about 
 				# the udp checksum so that it can work here!
-				#print udp_pkt.show2()
-				#print rtp_pkt.show2()
-				#rtp_pkt.padding = 0
-				#print type(rtp_pkt.load)
 				rtp_pkt.load = rtp_pkt.load + b
-				#rtp_pkt.load[10] = '\x61'
 				pkt.len = pkt.len + 1
 				udp_pkt.len = udp_pkt.len + 1
 				
@@ -56,9 +52,6 @@ def do_packet_steg(packet):
 			
 				# accept the packet to send it out after the
 				# modification takes place 
-				#print udp_pkt.show2()
-				#print rtp_pkt.show2()
-				#print pkt.show2()
 				packet.set_verdict_modified(nfqueue.NF_ACCEPT, str(pkt), len(pkt))
 			else:
 				packet.set_verdict_modified(nfqueue.NF_ACCEPT, str(pkt), len(pkt))
