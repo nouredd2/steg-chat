@@ -11,22 +11,33 @@ def do_packet_steg(packet):
 
 
 	# start packet modification here 
-	print pkt.summary()
+	#print pkt.show2()
 
 	if pkt.haslayer(UDP) and pkt.haslayer(Raw):
 		udp_pkt = pkt.getlayer(UDP)
 		udp_pkt.decode_payload_as(RTP)
 		rtp_pkt = pkt.getlayer(RTP)
 
-		if (rtp_pkt.payload_type == 120L) and (rtp_pkt.padding == 1L):
-			print "Found possible candidate"
+		if (rtp_pkt.payload_type == 120L): # and (rtp_pkt.padding == 1L):
 			data = rtp_pkt.load
-			print hexdump(data[len(data)-1])
+			print "Got ", data[len(data)-1]
 
+			#print pkt.show2()
+			rtp_pkt.load = data[0:len(data)-1]
 
-	# accept the packet to send it out after the
-	# modification takes place 
-	packet.set_verdict(nfqueue.NF_ACCEPT)
+			udp_pkt.len = udp_pkt.len - 1
+			pkt.len = pkt.len - 1
+			del pkt.chksum
+			del udp_pkt.chksum
+			pkt = pkt.__class__(str(pkt))
+			#print pkt.show2()
+			packet.set_verdict_modified(nfqueue.NF_ACCEPT, str(pkt), len(pkt))
+		else:
+			packet.set_verdict(nfqueue.NF_ACCEPT)
+	else:
+		# accept the packet to send it out after the
+		# modification takes place 
+		packet.set_verdict(nfqueue.NF_ACCEPT)
 	
 
 def main(argv=None):
@@ -36,7 +47,7 @@ def main(argv=None):
 	q.open()
 	q.bind(socket.AF_INET)
 	q.set_callback(do_packet_steg)
-	q.create_queue(1)
+	q.create_queue(2)
 
 
 	try:
