@@ -13,6 +13,13 @@ var remoteStream;
 var pc;
 var turnReady;
 
+// data points for graph 
+var dps = []
+var start_time;
+var end_time;
+var time_in_mills;
+var x_point = 0.0;
+
 // no idea what these things are yet! need to figure this out
 var pc_config = { 'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]};
 var pc_constraints =  {'optional': [{'DtlsSrtpKeyAgreement': true}]};
@@ -109,118 +116,6 @@ socket.on('message', function (message) {
 
 var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
-var localcanvas = document.querySelector('#localcanvas');
-var localctx = localcanvas.getContext('2d');
-
-var decodecanvas = document.querySelector('#decodecanvas');
-var decodectx = decodecanvas.getContext('2d');
-
-var tmpcanvas = document.createElement('canvas');
-var backcontext = tmpcanvas.getContext('2d');
-
-var msgdiv = document.querySelector('#txtMessage');
-
-var prevtime = (new Date()).getTime();
-var curtime = prevtime;
-var justonce = 1;
-
-// this sets up the seriously effects for testing the
-// modification of the video stream
-//var seriously = new Seriously();
-//var source = seriously.source('#localVideo');
-//var target = seriously.target('#localcanvas');
-//var tvglitch = seriously.effect('invert');
-//tvglitch.source = source;
-//target.source = tvglitch;
-
-function stegdraw (vid, ctx, bctx, width, height) {
-	if (vid.paused || vid.ended) {
-		return false;
-	}
-
-	// draw on the back canvas
-	bctx.drawImage(vid, 0, 0, width, height);
-	
-	// grab the image data
-	var idata = bctx.getImageData(0, 0, width, height);
-	var data = idata.data;
-
-	for (var i = 0;i < data.length; i+=4) {
-		var r = data[i],
-			g = data[i+1],
-			b = data[i+2],
-			alpha = data[i+3];
-
-		// mask to get the last two bits of the pixel 
-		var mask = 0xFFFFFFFC;
-		var letter = 104; // 104 in binary is 01101000
-		curtime = (new Date()).getTime();
-		if (curtime - prevtime >= 0) {
-			if (justonce === 1) {
-				console.log('bingo');
-				justonce = 0;
-			}
-			data[i] = (data[i] & mask) | 0x00000000;
-			data[i+1] = (data[i+1] & mask) | 0x00000001;
-			data[i+2] = (data[i+2] & mask) | 0x00000001;
-			data[i+3] = (data[i+3] & mask) | 0x00000002;
-		}
-		prevtime = curtime;
-
-	}
-
-	// put the image back into our canvas 
-	ctx.putImageData(idata, 0, 0);
-
-	setTimeout(function() { stegdraw(vid, ctx, bctx, width, height); }, 20);
-}
-
-
-function decodeMessage(vid, ctx, width, height, msgBox) {
-	if (vid.paused || vid.ended) {
-		return false;
-	}
-
-	ctx.drawImage(vid, 0, 0, width, height);
-
-	// grab current frame data
-	var idata = ctx.getImageData(0, 0, width, height);
-	var data = idata.data;
-
-	for (var i = 0; i < data.length; i +=4) {
-		var r = data[i];
-		var g = data[i+1];
-		var b = data[i+2];
-		var a = data[i+3];
-
-		if (justonce === 1) {
-			console.log(r.toString(2));
-			console.log(g.toString(2));
-			console.log(b.toString(2));
-			console.log(a.toString(2));
-		} else if (justonce === 2) {
-			console.log(r.toString(2));
-			console.log(g.toString(2));
-			console.log(b.toString(2));
-			console.log(a.toString(2));
-		}
-		/*
-		if (a === 255 && g === 255 && b === 255) {
-			if (justonce === 1) {
-				console.log('got your letter', r);
-				justonce = 2;
-			} else if (justonce === 2) {
-				console.log('got your letter', r);
-				justonce = 0;
-			}
-			var letter = r;
-			msgBox.innerHTML = letter;
-		}
-		*/
-	}
-
-	setTimeout( function() { decodeMessage(vid, ctx, width, height, msgBox); }, 20 );
-}
 
 /* --------------------------------------------------------------------------- */
 // this is basically the place where we get the stream from the user and 
@@ -242,31 +137,6 @@ function handleUserMedia(stream) {
 	if (isInitiator) {
 		maybeStart();
 		//seriously.go();
-
-		/*
-		// check if capture stream is supported
-		if (localcanvas.captureStream) {
-			// set the local stream to the output of the 
-			// canvas in which we are doing operations
-			console.log('Changing the local stream to canvas stream');
-
-			localVideo.addEventListener('play', function() {
-				var clientw = localVideo.clientWidth;
-				var clienth = localVideo.clientHeight;
-
-				localcanvas.width = clientw;
-				localcanvas.height = clienth;
-				tmpcanvas.width = clientw;
-				tmpcanvas.height = clienth;
-
-				stegdraw(localVideo, localctx, backcontext, clientw, clienth);
-			});
-
-			// this takes as parameter the fps of the capture stream 
-			// but it seems to be very slow when I use it
-			localStream = localcanvas.captureStream();
-		}
-		*/
 	}
 }
 
@@ -278,6 +148,72 @@ function handleUserMediaError(error) {
 // here is where we get the video form the user camera
 var constraints = {'video': true};
 getUserMedia(constraints, handleUserMedia, handleUserMediaError);
+
+function dumpStats(o) {
+  var s = "";
+  if (o.mozAvSyncDelay !== undefined || o.mozJitterBufferDelay !== undefined) {
+    if (o.mozAvSyncDelay !== undefined) s += "A/V sync: " + o.mozAvSyncDelay + " ms";
+    if (o.mozJitterBufferDelay !== undefined) {
+      s += " Jitter buffer delay: " + o.mozJitterBufferDelay + " ms";
+    }
+    s += "<br>";
+  }
+  s += "Timestamp: "+ new Date(o.timestamp).toTimeString() +" Type: "+ o.type +"<br>";
+  if (o.ssrc !== undefined) s += "SSRC: " + o.ssrc + " ";
+  if (o.packetsReceived !== undefined) {
+    s += "Recvd: " + o.packetsReceived + " packets";
+    if (o.bytesReceived !== undefined) {
+      s += " ("+ (o.bytesReceived/1024000).toFixed(2) +" MB)";
+    }
+    if (o.packetsLost !== undefined) s += " Lost: "+ o.packetsLost;
+  } else if (o.packetsSent !== undefined) {
+    s += "Sent: " + o.packetsSent + " packets";
+    if (o.bytesSent !== undefined) s += " ("+ (o.bytesSent/1024000).toFixed(2) +" MB)";
+  } else {
+    s += "<br><br>";
+  }
+  s += "<br>";
+  if (o.bitrateMean !== undefined) {
+    s += " Avg. bitrate: "+ (o.bitrateMean/1000000).toFixed(2) +" Mbps";
+    if (o.bitrateStdDev !== undefined) {
+      s += " ("+ (o.bitrateStdDev/1000000).toFixed(2) +" StdDev)";
+    }
+    if (o.discardedPackets !== undefined) {
+      s += " Discarded packts: "+ o.discardedPackets;
+    }
+  }
+  s += "<br>";
+  if (o.framerateMean !== undefined) {
+    s += " Avg. framerate: "+ (o.framerateMean).toFixed(2) +" fps";
+    if (o.framerateStdDev !== undefined) {
+      s += " ("+ o.framerateStdDev.toFixed(2) +" StdDev)";
+    }
+  }
+  if (o.droppedFrames !== undefined) s += " Dropped frames: "+ o.droppedFrames;
+  if (o.jitter !== undefined) {
+  	s += " Jitter: "+ o.jitter;
+  	end_time = new Date();
+  	time_in_mills = (end_time - start_time)/1000.0;
+  	start_time = end_time;
+  	x_point = x_point + time_in_mills;
+  	dps.push({
+  		x: x_point,
+  		y: o.jitter
+  	});
+  	addRow(x_point, o.jitter);
+  }
+  return s;
+}
+
+function addRow(x, y) {
+	var table = document.getElementById('jittertable');
+	var rowCount = table.rows.length;
+	var row = table.insertRow(rowCount);
+
+	row.insertCell(0).innerHTML = x.toString();
+	row.insertCell(1).innerHTML = y.toString();
+}
+
 
 console.log('Getting user media with constraints', constraints);
 
@@ -296,6 +232,25 @@ function maybeStart() {
 		if (isInitiator) {
 			doCall();
 		}
+
+		repeat(100, () => Promise.all([pc.getStats(null)])
+			.then(ses => {
+				var s1 = ses[0];
+				var s = "";
+				Object.keys(s1).some(key => {
+					if (s1[key].type != "outboundrtp" || s1[key].isRemote) 
+						return false;
+					s += "<h4>Sender side</h4>" + dumpStats(s1[key]); 
+					return true;
+				});
+      			Object.keys(s1).some(key => {
+      			  	if (s1[key].type != "inboundrtp" || s1[key].isRemote) 
+      			  		return false;
+      		   		s += "<h4>Receiver side</h4>" + dumpStats(s1[key]); 
+      		   		return true;
+      		 	});
+      		update(statsdiv, "<small>"+ s +"</small>");
+      	}))
 	}
 }
 
@@ -303,7 +258,41 @@ function maybeStart() {
 // server can broadcast the message back to the other client 
 window.onbeforeunload = function(e) {
 	sendMessage('bye');
+	file.end();
 }
+
+// UPDATED: For making jitter and other stuff plots 
+window.onload = function(){
+	var chart = new CanvasJS.Chart("chartContainer",{
+		// title :{
+		// 	text: "Live Random Data"
+		// },			
+		data: [{
+			type: "line",
+			dataPoints: dps 
+		}]
+	});
+
+	var updateInterval = 100;
+	var dataLength = 100; // number of dataPoints visible at any point
+
+	start_time = new Date()
+	var updateChart = function (count) {
+		if (dps.length > dataLength)
+		{
+			dps.shift();				
+		}
+		
+		chart.render();		
+
+	};
+
+	// generates first set of dataPoints
+	// updateChart(dataLength); 
+
+	// update chart after specified time. 
+	setInterval(function(){updateChart()}, updateInterval); 
+};
 
 /* --------------------------------------------------------------------------- */
 // Peer connection set up and other Peer Connection stuff!
@@ -407,19 +396,6 @@ function handleRemoteStreamAdded(event) {
 	console.log('Remote stream added.');
 	remoteVideo.src = window.URL.createObjectURL(event.stream);
 	remoteStream = event.stream;
-
-	/*
-	if (!isInitiator) {
-		remoteVideo.addEventListener('play', function() {
-				var clientw = remoteVideo.clientWidth;
-				var clienth = remoteVideo.clientHeight;
-
-				decodecanvas.width = clientw;
-				decodecanvas.height = clienth;
-
-				decodeMessage(remoteVideo, decodectx, clientw, clienth, msgdiv);
-		});
-	}*/
 }
 
 function handleRemoteStreamRemoved(event) {
@@ -523,3 +499,12 @@ function removeCN(sdpLines, mLineIndex) {
   return sdpLines;
 }
 
+
+/* --------------------------------------------------------------------------- */
+// This is additional code for testing out the rtp getstats 
+
+var wait = ms => new Promise(r => setTimeout(r, ms));
+var repeat = (ms, func) => new Promise(r => (setInterval(func, ms), wait(ms).then(r)));
+var log = msg => div.innerHTML = div.innerHTML +"<p>"+ msg +"</p>";
+var update = (div, msg) => div.innerHTML = msg;
+var failed = e => log(e.name +": "+ e.message +", line "+ e.lineNumber);
