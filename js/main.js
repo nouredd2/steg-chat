@@ -192,15 +192,6 @@ function dumpStats(o) {
   if (o.droppedFrames !== undefined) s += " Dropped frames: "+ o.droppedFrames;
   if (o.jitter !== undefined) {
   	s += " Jitter: "+ o.jitter;
-  	end_time = new Date();
-  	time_in_mills = (end_time - start_time)/1000.0;
-  	start_time = end_time;
-  	x_point = x_point + time_in_mills;
-  	dps.push({
-  		x: x_point,
-  		y: o.jitter
-  	});
-  	addRow(x_point, o.jitter);
   }
   return s;
 }
@@ -246,10 +237,20 @@ function maybeStart() {
       			Object.keys(s1).some(key => {
       			  	if (s1[key].type != "inboundrtp" || s1[key].isRemote) 
       			  		return false;
-      		   		s += "<h4>Receiver side</h4>" + dumpStats(s1[key]); 
+      		   		s += "<h4>Receiver side</h4>" + dumpStats(s1[key]);
+      		   		var o = s1[key];
+      		   		end_time = new Date();
+  					time_in_mills = (end_time - start_time)/1000.0;
+  					start_time = end_time;
+  					x_point = x_point + time_in_mills;
+  					dps.push({
+  						x: x_point,
+  						y: o.jitter
+  					});
+  					addRow(x_point, o.jitter); 
       		   		return true;
       		 	});
-      		update(statsdiv, "<small>"+ s +"</small>");
+      			// update(statsdiv, "<small>"+ s +"</small>");
       	}))
 	}
 }
@@ -262,7 +263,10 @@ window.onbeforeunload = function(e) {
 }
 
 // UPDATED: For making jitter and other stuff plots 
+
 window.onload = function(){
+	start_time = new Date();
+	/*	
 	var chart = new CanvasJS.Chart("chartContainer",{
 		// title :{
 		// 	text: "Live Random Data"
@@ -276,7 +280,7 @@ window.onload = function(){
 	var updateInterval = 100;
 	var dataLength = 100; // number of dataPoints visible at any point
 
-	start_time = new Date()
+	
 	var updateChart = function (count) {
 		if (dps.length > dataLength)
 		{
@@ -292,6 +296,7 @@ window.onload = function(){
 
 	// update chart after specified time. 
 	setInterval(function(){updateChart()}, updateInterval); 
+	*/
 };
 
 /* --------------------------------------------------------------------------- */
